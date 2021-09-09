@@ -1,13 +1,13 @@
 import numpy as np
 from tqdm.auto import tqdm
 
-from ..recommender import Recommender
-from ...exception import CornacException
-from ...exception import ScoreException
-from ...utils import fast_dot
-from ...utils.common import intersects
-from ...utils import get_rng
-from ...utils.init_utils import zeros, xavier_uniform
+from cornac.models import Recommender
+from cornac.exception import CornacException
+from cornac.exception import ScoreException
+from cornac.utils import fast_dot
+from cornac.utils.common import intersects
+from cornac.utils import get_rng
+from cornac.utils.init_utils import zeros, xavier_uniform
 
 
 class VBPR(Recommender):
@@ -207,6 +207,7 @@ class VBPR(Recommender):
             for batch_u, batch_i, batch_j in self.train_set.uij_iter(
                 self.batch_size, shuffle=True
             ):
+                
                 gamma_u = Gu[batch_u]
                 theta_u = Tu[batch_u]
 
