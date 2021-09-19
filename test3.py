@@ -8,20 +8,20 @@ from cornac.eval_methods import RatioSplit
 from vbpr import VBPR
 import pandas as pd
 
-p = Path('../Downloads/ratings_Cell_Phones_and_Accessories.csv')
+p = Path('../datasets/ratings_Cell_Phones_and_Accessories.csv')
 df = pd.read_csv(p, delimiter=',')
 feedback = [tuple(row[0:3]) for row in df.values]
 
 def readImageFeatures(path):
   f = open(path, 'rb')
-  for i in range(0, 303890):
+  while True:
     asin = f.read(10)
     if asin == '': break
     a = array.array('f')
     a.fromfile(f, 4096)
     yield asin, a.tolist()
 print(1)
-p = Path('../Downloads/image_features_Cell_Phones_and_Accessories.b')
+p = Path('../datasets/image_features_Cell_Phones_and_Accessories.b')
 ft = []
 item_ids = []
 for i in readImageFeatures(p):
