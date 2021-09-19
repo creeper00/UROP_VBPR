@@ -51,7 +51,7 @@ vbpr = VBPR(
     lambda_w=1,
     lambda_b=0.01,
     lambda_e=0.0,
-    use_gpu=False,
+    use_gpu=True,
 )
 
 auc = cornac.metrics.AUC()
