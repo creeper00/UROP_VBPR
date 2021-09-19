@@ -22,13 +22,13 @@ def readImageFeatures(path):
       a.fromfile(f, 4096)
       yield asin, a.tolist()
     except:
-      yield -1, []
+      yield b'-1', []
 print(1)
 p = Path('../datasets/image_features_Cell_Phones_and_Accessories.b')
 ft = []
 item_ids = []
 for i in readImageFeatures(p):
-    if i[0] > 0 :
+    if i[0] != b'-1' :
       ft.append(i[1])
       item_ids.append(i[0])
 print(2)
