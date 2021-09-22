@@ -15,22 +15,26 @@ feedback = [tuple(row[0:3]) for row in df.values]
 def readImageFeatures(path):
   f = open(path, 'rb')
   while True:
+    asin = f.read(10)
+    if asin == '': break
+    a = array.array('f')
     try:
-      asin = f.read(10)
-      if asin == '': break
-      a = array.array('f')
       a.fromfile(f, 4096)
       yield asin, a.tolist()
     except:
+      print(a)
       yield b'-1', []
 print(1)
 p = Path('../datasets/image_features_Cell_Phones_and_Accessories.b')
 ft = []
 item_ids = []
+num=0
 for i in readImageFeatures(p):
     if i[0] != b'-1' :
       ft.append(i[1])
       item_ids.append(i[0])
+    else :
+      break
 print(2)
 features = np.array(ft)
 
