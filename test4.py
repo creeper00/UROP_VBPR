@@ -36,6 +36,11 @@ for i in parse(p) :
     tfms = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),])
     img = tfms(img).unsqueeze(0)
+    transform = transforms.Compose([transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+        ])
+    if img.shape[1] == 1 :
+        img = transform(img)
     features = model.extract_features(img)
     m = nn.Linear(81920, 4096)
     f = m(features.view(-1))
@@ -44,8 +49,5 @@ for i in parse(p) :
     file.write(pid)
     fl = f.detach().numpy().tolist()
     file.write(bytes(array.array('f', fl)))
-    x = x + 1
-    if x==3 : break
-    
 
 
