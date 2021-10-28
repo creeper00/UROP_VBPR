@@ -28,8 +28,13 @@ print(3)
 x = 0
 file = open("../datasets/efficient_Cell_Phones_and_Accessories.b", "wb")
 for i in parse(p) :
+    x=x+1
     j = json.loads(i)
-    url = j['imUrl']
+    try:
+        url = j['imUrl']
+    except:
+        print(x)
+        continue
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
     tfms1 = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor(),
