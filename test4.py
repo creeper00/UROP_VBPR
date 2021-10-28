@@ -17,7 +17,7 @@ import array
 print(0)
 model = EfficientNet.from_pretrained('efficientnet-b0')
 print(1)
-p = Path("../Downloads/meta_Cell_Phones_and_Accessories.json.gz")
+p = Path("../datasets/meta_Cell_Phones_and_Accessories.json.gz")
 
 def parse(path):
   g = gzip.open(path, 'r')
@@ -26,7 +26,7 @@ def parse(path):
 
 print(3)
 x = 0
-file = open("../Downloads/efficient_Cell_Phones_and_Accessories.b", "wb")
+file = open("../datasets/efficient_Cell_Phones_and_Accessories.b", "wb")
 for i in parse(p) :
     j = json.loads(i)
     url = j['imUrl']
