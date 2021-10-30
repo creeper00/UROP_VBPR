@@ -27,21 +27,21 @@ def parse(path):
 print(3)
 x = 0
 file = open("../datasets/efficient_Cell_Phones_and_Accessories.b", "wb")
+tfms1 = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),])
+tfms2 = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor(),
+    transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),])
 for i in parse(p) :
     x=x+1
     j = json.loads(i)
     try:
         url = j['imUrl']
+        response = requests.get(url)
+        img = Image.open(BytesIO(response.content))
     except:
         print(x)
         continue
-    response = requests.get(url)
-    img = Image.open(BytesIO(response.content))
-    tfms1 = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),])
-    tfms2 = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor(),
-        transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),])
     try:
         img = tfms1(img).unsqueeze(0)
     except:
