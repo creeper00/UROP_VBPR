@@ -111,13 +111,13 @@ class VBPR(Recommender):
         if self.theta_user is None:
             self.theta_user = xavier_uniform((n_users, self.k2), rng)
         if self.emb_matrix is None:
-            self.emb_matrix = xavier_uniform((features.shape[1], self.k2), rng)
+            self.emb_matrix = xavier_uniform((4096, self.k2), rng)
         if self.beta_prime is None:
-            self.beta_prime = xavier_uniform((features.shape[1], 1), rng)
+            self.beta_prime = xavier_uniform((4096, 1), rng)
 
         # pre-computed for faster evaluation
-        self.theta_item = np.matmul(features, self.emb_matrix)
-        self.visual_bias = np.matmul(features, self.beta_prime).ravel()
+        #self.theta_item = np.matmul(features, self.emb_matrix)
+        #self.visual_bias = np.matmul(features, self.beta_prime).ravel()
 
     def fit(self, train_set, val_set=None):
         """Fit the model to observations.
@@ -141,7 +141,7 @@ class VBPR(Recommender):
 
         # Item visual feature from CNN
         train_features = train_set.item_image.features[: self.train_set.total_items]
-        train_features = train_features.astype(np.float32)
+        #train_features = train_features.astype(np.float32)
         self._init(
             n_users=train_set.total_users,
             n_items=train_set.total_items,
@@ -168,12 +168,16 @@ class VBPR(Recommender):
 
         dtype = torch.float
         device = (
-            torch.device("cuda:0")
+            torch.device("cuda:3")
             if (self.use_gpu and torch.cuda.is_available())
             else torch.device("cpu")
         )
 
-        F = torch.tensor(train_features, device=device, dtype=dtype)
+        try:
+            F = torch.tensor(train_features, device=device, dtype=dtype)
+        except:
+            F = list(map(lambda x : x[0], train_features))
+            #F = torch.stack(train_features)
         # Learned parameters
         Bi = torch.tensor(
             self.beta_item, device=device, dtype=dtype, requires_grad=True
@@ -193,7 +197,8 @@ class VBPR(Recommender):
         Bp = torch.tensor(
             self.beta_prime, device=device, dtype=dtype, requires_grad=True
         )
-
+        print(Bp.shape)
+        print(E.shape)
         optimizer = torch.optim.Adam([Bi, Gu, Gi, Tu, E, Bp], lr=self.learning_rate)
 
         for epoch in range(1, self.n_epochs + 1):
@@ -215,8 +220,23 @@ class VBPR(Recommender):
                 beta_j = Bi[batch_j]
                 gamma_i = Gi[batch_i]
                 gamma_j = Gi[batch_j]
-                feat_i = F[batch_i]
-                feat_j = F[batch_j]
+                
+                try:
+                    feat_i = F[batch_i]
+                    feat_j = F[batch_j]
+                except:
+                    try:
+                        feat_i = torch.stack(F[batch_i])
+                        feat_j = torch.stack(F[batch_j])
+                    except:
+                        feat_i = []
+                        feat_j = []
+                        for i in batch_i :
+                            feat_i.append(F[i].cpu())
+                        for j in batch_j :
+                            feat_j.append(F[j].cpu())
+                        feat_i = torch.stack(feat_i).to(device)
+                        feat_j = torch.stack(feat_j).to(device)
 
                 gamma_diff = gamma_i - gamma_j
                 feat_diff = feat_i - feat_j
@@ -260,9 +280,39 @@ class VBPR(Recommender):
         self.emb_matrix = E.data.cpu().numpy()
         self.beta_prime = Bp.data.cpu().numpy()
         # pre-computed for faster evaluation
-        self.theta_item = F.mm(E).data.cpu().numpy()
-        self.visual_bias = F.mm(Bp).data.cpu().numpy().ravel()
-
+        try:
+            self.theta_item = F.mm(E).data.cpu().numpy()
+            self.visual_bias = F.mm(Bp).data.cpu().numpy().ravel()
+        except:
+            ti = []
+            vb = []
+            device2 = torch.device("cuda:2")
+            e = E.data.cpu()
+            b = Bp.data.cpu()
+            print(e)
+            print(b)
+            for idx,i in enumerate(F):
+                x = torch.transpose(i.unsqueeze(1),0,1).cpu()
+                #print(x.device)
+                #print(e.deivce)
+                ti.append(x.mm(e).numpy()) 
+                if idx==2 :
+                    print(x.shape)
+                    print(x.mm(e).shape)
+                    
+            print('bp')
+            for idx, i in enumerate(F):
+                x = torch.transpose(i.unsqueeze(1),0,1).cpu()
+                vb.append(x.mm(b).numpy())
+                if idx == 2 :
+                    print(x.shape)
+                    print(x.mm(b).shape)
+        
+            self.theta_item = np.squeeze(np.stack(ti, axis=0), axis=1)
+            self.visual_bias = np.stack(vb, axis=0).ravel()
+            print(self.theta_item.shape)
+            print(self.visual_bias.shape)
+    
     def score(self, user_idx, item_idx=None):
         """Predict the scores/ratings of a user for an item.
 

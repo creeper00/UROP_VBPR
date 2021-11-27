@@ -22,7 +22,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 print(0)
 model = EfficientNet.from_pretrained('efficientnet-b0')
 print(1)
-p = Path("../datasets/meta_Cell_Phones_and_Accessories.json.gz")
+p = Path("../datasets/meta_Clothing_Shoes_and_Jewelry.json.gz")
 
 def parse(path):
   g = gzip.open(path, 'r')
@@ -53,7 +53,7 @@ class ImgDataset(data.Dataset):
 
     def __getitem__(self, index):
         pid = self.img_list[index]
-        path = "../datasets/Amazon_Cell_Phones_and_Accesories_Img/img/"+pid+".jpg"
+        path = "../datasets/Amazon_Clothing_Shoes_and_Jewelry_Img/"+pid+".jpg"
         try:
             img = Image.open(path)
         except:
@@ -88,7 +88,7 @@ nmodel = ExtractEfficientNet()
 print(3)
 model.to(device)
 nmodel.to(device)
-file = open(Path("../datasets/efficient_Cell_Phones_and_Accessories.b"), "wb")
+file = open(Path("../datasets/efficient_Clothing_Shoes_and_Jewelry.b"), "wb")
 for batch in pdataloader :
     paths, images = batch
     inpt = images.to(device)
