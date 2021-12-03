@@ -20,7 +20,8 @@ import torch
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 print(0)
-model = EfficientNet.from_pretrained('efficientnet-b0')
+#model = EfficientNet.from_pretrained('efficientnet-b0')
+model = torch.load("../datasets/model.pt")
 print(1)
 p = Path("../datasets/meta_Clothing_Shoes_and_Jewelry.json.gz")
 
@@ -88,7 +89,7 @@ nmodel = ExtractEfficientNet()
 print(3)
 model.to(device)
 nmodel.to(device)
-file = open(Path("../datasets/efficient_Clothing_Shoes_and_Jewelry.b"), "wb")
+file = open(Path("../datasets/deep_Clothing_Shoes_and_Jewelry.b"), "wb")
 for batch in pdataloader :
     paths, images = batch
     inpt = images.to(device)

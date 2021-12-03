@@ -9,7 +9,7 @@ from vbpr import VBPR
 import pandas as pd
 import torch
 
-p = Path('../datasets/ratings_Clothing_Shoes_and_Jewelry.csv')
+p = Path('../datasets/ratings_Cell_Phones_and_Accessories.csv')
 df = pd.read_csv(p, delimiter=',')
 feedback = [tuple(row[0:3]) for row in df.values]
 print(torch.cuda.device_count())
@@ -25,7 +25,7 @@ def readImageFeatures(path):
     except:
       yield b'-1', []
 print(1)
-p = Path('../datasets/efficient_Clothing_Shoes_and_Jewelry.b')
+p = Path('../datasets/efficient_Cell_Phones_and_Accessories.b')
 ft = []
 item_ids = []
 num=0

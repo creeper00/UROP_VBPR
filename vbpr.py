@@ -168,7 +168,7 @@ class VBPR(Recommender):
 
         dtype = torch.float
         device = (
-            torch.device("cuda:3")
+            torch.device("cuda")
             if (self.use_gpu and torch.cuda.is_available())
             else torch.device("cpu")
         )
