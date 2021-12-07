@@ -26,7 +26,8 @@ from fastai.vision.all import *
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 print(0)
-model = EfficientNet.from_pretrained('efficientnet-b0')
+#model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=50)
+model = torch.load('../datasets/model2.pt')
 print(1)
 
 
@@ -35,32 +36,75 @@ tfms1 = transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()
 tfms2 = transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor(),
     transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),])
+'''
+with open('../datasets/deepfashion/train.txt') as f :
+    tr = f.readlines()
+#with open('../datasets/deepfashion/text.txt') as f :
+ #   te = f.readlines()
+with open('../datasets/deepfashion/val.txt') as f :
+    va = f.readlines()
 
-class ImgDataset(data.Dataset):
-    def __len__(self):
-        return 289222
-
-    def __getitem__(self, index):
-        # img = self.img_list[index]
-        id = self.img_list[index]
-        path = "../datasets/deepfashion/img2/"+id+".jpg"
-        try:
-            image = Image.open(path)
-        except:
-            return 
-        try:
-            return path, tfms1(image)
-        except:
-            return path, tfms2(image)
-
-        #return path, tfms1(image)  # (3, 224, 224) tensor
-
+with open('../datasets/deepfashion/train_cate.txt') as f :
+    trc = f.readlines()
+#with open('../datasets/deepfashion/text_cate.txt') as f :
+ #   tec = f.readlines()
+with open('../datasets/deepfashion/val_cate.txt') as f :
+    vac = f.readlines()
+'''
 
 device = torch.device("cuda")
 print(1)
+
+class ImgDataset(data.Dataset):
+
+    def __init__(self, im, lb):
+        self.im = im
+        self.lb = lb
+
+    def __len__(self):
+        return len(self.lb)
+
+    def __getitem__(self, index):
+        label = torch.tensor(int(self.lb[index]))
+        path = "../datasets/deepfashion/"+self.im[index]
+        try:
+            img = Image.open(path)
+        except:
+            img = torch.zeros(1,3,224,224)
+            return img, label
+        try:
+            img = tfms1(img).unsqueeze(0)
+        except:
+            img = tfms2(img).unsqueeze(0)
+        return img, label
+
+def evaluateTop3(model, loader):
+    model.eval()
+    correct = 0
+    total = len(loader.dataset)
+    print(total)
+    for x, y in loader:
+        x,y = x.squeeze(1).to(device),y.to(device)
+        with torch.no_grad():
+            logits = model(x)
+            maxk = max((1,3))
+            yr = y.view(-1,1)
+            _, pred = logits.topk(maxk, 1, True, True)
+            correct += torch.eq(pred, yr).sum().float().item()
+    return correct / total
+
 #pdataset = ImgDataset()
 #print(2)
 #pdataloader = data.DataLoader(pdataset, batch_size=32, shuffle=False, pin_memory=True, drop_last=False)
+
+#trds = ImgDataset(tr, trc)
+#teds = ImgDataset(te, tec)
+#vads = ImgDataset(va, vac)
+
+#trdl =  data.DataLoader(trds, batch_size=96, shuffle=True, pin_memory=True, drop_last=False)
+#tedl =  data.DataLoader(teds, batch_size=32, shuffle=False, pin_memory=True, drop_last=False)
+#vadl =  data.DataLoader(vads, batch_size=96, shuffle=False, pin_memory=True, drop_last=False)
+
 
 data = ImageDataLoaders.from_csv("../datasets/deepfashion", csv_fname="train_labels.csv",
                                  item_tfms=Resize(300),
@@ -68,8 +112,11 @@ data = ImageDataLoaders.from_csv("../datasets/deepfashion", csv_fname="train_lab
                                  valid_pct=0.1,
                                  splitter=RandomSplitter(seed=42),
                                  num_workers=0)
-print(len(data.valid))
+
+#data = { 'train' : trdl, 'val' : vadl }
+#print(len(data.valid))
 data = { 'train' : data.train, 'val' : data.valid }
+print(data['train'].one_batch())
 print(3)
 model.to(device)
 # Gather the parameters to be optimized/updated in this run. If we are
@@ -83,7 +130,7 @@ for name,param in model.named_parameters():
         if param.requires_grad == True:
             print("\t",name)
 # Observe that all parameters are being optimized
-optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
+optimizer_ft = optim.SGD(params_to_update, lr=0.01, momentum=0.9)
 
 
 def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_inception=False):
@@ -110,8 +157,10 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_ince
 
             # Iterate over data.
             for inputs, labels in dataloaders[phase]:
+                #inputs = inputs.squeeze(1).to(device)
                 inputs = inputs.to(device)
                 labels = labels.to(device)
+                #print(labels) 
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -132,7 +181,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_ince
                     else:
                         outputs = model(inputs)
                         loss = criterion(outputs, labels)
-
+                        
                     _, preds = torch.max(outputs, 1)
 
                     # backward + optimize only if in training phase
@@ -167,5 +216,5 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_ince
     return model, val_acc_history
 
 criterion = nn.CrossEntropyLoss()
-model_ft, hist = train_model(model, data, criterion, optimizer_ft, num_epochs=10, is_inception=False)
-torch.save(model_ft, "../datasets/model.pt")
+model_ft, hist = train_model(model, data, criterion, optimizer_ft, num_epochs=2, is_inception=False)
+torch.save(model_ft, "../datasets/model2.pt")

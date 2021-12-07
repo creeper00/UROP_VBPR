@@ -20,10 +20,12 @@ import torch
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 print(0)
-#model = EfficientNet.from_pretrained('efficientnet-b0')
-model = torch.load("../datasets/model.pt")
+model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=50)
+#model = torch.load("../datasets/model2.pt")
+model.load_state_dict(torch.load("../datasets/model_s.pt"))
+model.eval()
 print(1)
-p = Path("../datasets/meta_Clothing_Shoes_and_Jewelry.json.gz")
+p = Path("../datasets/meta_Baby.json.gz")
 
 def parse(path):
   g = gzip.open(path, 'r')
@@ -54,7 +56,7 @@ class ImgDataset(data.Dataset):
 
     def __getitem__(self, index):
         pid = self.img_list[index]
-        path = "../datasets/Amazon_Clothing_Shoes_and_Jewelry_Img/"+pid+".jpg"
+        path = "../datasets/Amazon_Baby_Img/img/"+pid+".jpg"
         try:
             img = Image.open(path)
         except:
@@ -89,7 +91,7 @@ nmodel = ExtractEfficientNet()
 print(3)
 model.to(device)
 nmodel.to(device)
-file = open(Path("../datasets/deep_Clothing_Shoes_and_Jewelry.b"), "wb")
+file = open(Path("../datasets/deep_Baby.b"), "wb")
 for batch in pdataloader :
     paths, images = batch
     inpt = images.to(device)
